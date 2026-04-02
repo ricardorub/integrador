@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Peloteros</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-green: #2e7d32;
+            --secondary-green: #81c784;
+            --light-green: #f1f8e9;
+            --orange: #fb8c00;
+        }
+        
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+        
+        .login-container {
+            max-width: 500px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 30px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-logo {
+            height: 60px;
+            margin-bottom: 15px;
+        }
+        
+        .login-title {
+            color: var(--primary-green);
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .login-subtitle {
+            color: #666;
+            font-size: 1rem;
+        }
+        
+        .form-control {
+            height: 45px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+            padding-left: 15px;
+        }
+        
+        .form-control:focus {
+            border-color: var(--secondary-green);
+            box-shadow: 0 0 0 0.25rem rgba(129, 199, 132, 0.25);
+        }
+        
+        .btn-login {
+            background-color: var(--primary-green);
+            border: none;
+            height: 45px;
+            border-radius: 5px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-login:hover {
+            background-color: #1b5e20;
+        }
+        
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .divider-text {
+            padding: 0 10px;
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .social-login {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .social-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            transition: all 0.3s;
+        }
+        
+        .social-btn:hover {
+            transform: translateY(-3px);
+        }
+        
+        .btn-facebook {
+            background-color: #3b5998;
+        }
+        
+        .btn-google {
+            background-color: #db4437;
+        }
+        
+        .register-link {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .register-link a {
+            color: var(--primary-green);
+            font-weight: 500;
+            text-decoration: none;
+        }
+        
+        .register-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .alert {
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="login-container">
+            <div class="login-header">
+                <img th:src="@{/img/logo.png}" alt="Peloteros" class="login-logo">
+                <h2 class="login-title">Iniciar Sesión</h2>
+                <p class="login-subtitle">Ingresa tus credenciales para acceder a tu cuenta</p>
+                
+                <!-- Spring Security error/logout messages -->
+                <div th:if="${param.error}" class="alert alert-danger" role="alert">
+                    Credenciales incorrectas. Por favor intenta nuevamente.
+                </div>
+                <div th:if="${param.logout}" class="alert alert-success" role="alert">
+                    Has cerrado sesión exitosamente.
+                </div>
+                
+                <!-- Custom Flash Attributes -->
+                <div th:if="${successMessage}" class="alert alert-success" role="alert" th:text="${successMessage}">
+                </div>
+                <div th:if="${errorMessage}" class="alert alert-danger" role="alert" th:text="${errorMessage}">
+                </div>
+                <!-- End Custom Flash Attributes -->
+
+            </div>
+            
+            <form id="loginForm" th:action="@{/usuario/login}" method="post" class="needs-validation" novalidate>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <div class="mb-3">
+                    <label for="email" class="form-label">Correo electrónico</label>
+                    <input type="email" class="form-control" id="email" name="username" required placeholder="Ingresa tu correo electrónico"> <!-- name="username" -->
+                </div>
+                
+                <div class="mb-3">
+                    <label for="password" class="form-label">Contraseña</label>
+                    <input type="password" class="form-control" id="password" name="password" required placeholder="Ingresa tu contraseña">
+                    <div class="invalid-feedback">
+                        Por favor ingresa tu contraseña
+                    </div>
+                    <div class="text-end mt-2">
+                        <a href="#" class="text-muted small">¿Olvidaste tu contraseña?</a>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2 mb-3">
+                    <button type="submit" class="btn btn-login text-white">
+                        <i class="fas fa-sign-in-alt me-2"></i>Ingresar
+                    </button>
+                </div>
+                
+                <div class="divider">
+                    <span class="divider-text">o</span>
+                </div>
+                
+                <div class="social-login">
+                    <a href="#" class="social-btn btn-facebook">
+                        <i class="fab fa-facebook-f"></i>
+                    </a>
+                    <a href="#" class="social-btn btn-google">
+                        <i class="fab fa-google"></i>
+                    </a>
+                </div>
+                
+                <div class="register-link">
+                    ¿No tienes una cuenta? <a th:href="@{/usuario/home/registro}">Regístrate aquí</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Bootstrap JS -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        
+        <!-- Custom JavaScript for form handling -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.getElementById('loginForm');
+                const emailInput = document.getElementById('email');
+                
+                // Real-time email validation
+                emailInput.addEventListener('input', function() {
+                    if (emailInput.validity.typeMismatch) {
+                        emailInput.setCustomValidity('Por favor ingrese un correo electrónico válido');
+                    } else {
+                        emailInput.setCustomValidity('');
+                    }
+                });
+                
+                // Form submission handling
+                form.addEventListener('submit', async function(event) {
+                    event.preventDefault();
+                    
+                    if (!form.checkValidity()) {
+                        event.stopPropagation();
+                        form.classList.add('was-validated');
+                        return;
+                    }
+                    
+                    const formData = new FormData(form);
+                    const csrfToken = document.querySelector('input[name="_csrf"]').value;
+                    
+                    try {
+                        // 1. Submit login form
+                        const loginResponse = await fetch(form.action, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded',
+                                'X-Requested-With': 'XMLHttpRequest',
+                                'X-CSRF-TOKEN': csrfToken
+                            },
+                            body: new URLSearchParams(formData).toString(),
+                            credentials: 'same-origin'
+                        });
+                        
+                        if (loginResponse.redirected) {
+                            // 2. If login successful, get user data
+                            const userResponse = await fetch('/usuario/api/usuario/actual', {
+                                credentials: 'same-origin',
+                                headers: {
+                                    'Accept': 'application/json',
+                                    'X-Requested-With': 'XMLHttpRequest'
+                                }
+                            });
+                            
+                            if (userResponse.ok) {
+                                const userData = await userResponse.json();
+                                if (userData.id) {
+                                    // 3. Store user data in localStorage
+                                    localStorage.setItem('usuario', JSON.stringify(userData));
+                                    console.log('Datos de usuario guardados:', userData);
+                                }
+                            }
+                            
+                            // 4. Redirect to home page
+                            window.location.href = '/';
+                        } else {
+                            // Handle login error
+                            const error = await loginResponse.text();
+                            showError('Error en el inicio de sesión. Por favor verifica tus credenciales.');
+                        }
+                    } catch (error) {
+                        console.error('Error durante el inicio de sesión:', error);
+                        showError('Error al conectar con el servidor. Por favor intenta de nuevo.');
+                    }
+                    
+                    form.classList.add('was-validated');
+                }, false);
+                
+                // Show error message
+                function showError(message) {
+                    // Remove any existing error messages
+                    const existingError = document.querySelector('.alert.alert-danger');
+                    if (existingError) {
+                        existingError.remove();
+                    }
+                    
+                    const errorDiv = document.createElement('div');
+                    errorDiv.className = 'alert alert-danger mt-3';
+                    errorDiv.textContent = message;
+                    
+                    const header = document.querySelector('.login-header');
+                    if (header) {
+                        header.after(errorDiv);
+                    }
+                }
+                
+                // Check for existing session on page load
+                checkExistingSession();
+                
+                async function checkExistingSession() {
+                    try {
+                        const response = await fetch('/usuario/api/usuario/actual', {
+                            credentials: 'same-origin',
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const userData = await response.json();
+                            if (userData.id) {
+                                localStorage.setItem('usuario', JSON.stringify(userData));
+                                console.log('Sesión existente encontrada:', userData);
+                                // Redirect to home if user is already logged in
+                                window.location.href = '/';
+                            }
+                        }
+                    } catch (error) {
+                        console.log('No hay sesión activa:', error);
+                        localStorage.removeItem('usuario');
+                    }
+                }
+            });
+        </script>
+    </body>
+    </html>

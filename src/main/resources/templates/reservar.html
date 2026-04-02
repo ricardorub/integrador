@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security6">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reservar Cancha - Peloteros</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-green: #2e7d32;
+            --secondary-green: #81c784;
+            --light-green: #f1f8e9;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 2rem 0;
+        }
+
+        .reservation-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+
+        .reservation-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .reservation-header h2 {
+            color: var(--primary-green);
+            font-weight: bold;
+        }
+
+        .btn-reservar {
+            background-color: var(--primary-green);
+            border: none;
+            padding: 0.75rem 2rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-reservar:hover {
+            background-color: #1b5e20;
+        }
+
+        .alert {
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="reservation-container">
+            <div class="reservation-header">
+                <h2>Reservar Cancha</h2>
+                <p class="text-muted">Selecciona la cancha, fecha y horario para tu reserva</p>
+
+                <!-- Mensajes de error -->
+                <div th:if="${error != null}" class="alert alert-danger" th:text="${error}">
+                    Mensaje de error
+                </div>
+            </div>
+
+            <form th:action="@{/reserva/reservar}" method="post" id="reservationForm" class="needs-validation" novalidate>
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+                <!-- Sección de selección de cancha -->
+                <div class="mb-4">
+                    <h5 class="mb-3">1. Selecciona una cancha</h5>
+                    <div class="row" id="courtSelection">
+                        <div th:each="cancha : ${canchas}" class="col-md-6 mb-3">
+                            <div class="card h-100 court-card" 
+                                 th:data-id="${cancha.id}" 
+                                 th:data-price="${cancha.precioPorHora}"
+                                 style="cursor: pointer;">
+                                <div class="card-body p-0">
+                                    <img th:if="${cancha.foto != null}" th:src="|data:image/jpeg;base64,${cancha.fotoBase64}|" th:alt="${cancha.nombre}" class="card-img-top" style="height: 150px; object-fit: cover;" />
+                                    <img th:unless="${cancha.foto != null}" th:src="@{${cancha.fotoUrl}}" th:alt="${cancha.nombre}" class="card-img-top" style="height: 150px; object-fit: cover;" />
+                                    <div class="p-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h5 class="card-title mb-0" th:text="${cancha.nombre}">Cancha</h5>
+                                            <span class="badge bg-success">
+                                                S/. <span th:text="${cancha.precioPorHora}">0</span>/hora
+                                            </span>
+                                        </div>
+                                        <p class="card-text text-muted small" th:text="${cancha.descripcion}">
+                                            Descripción de la cancha
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div th:if="${#lists.isEmpty(canchas)}" class="col-12">
+                            <div class="alert alert-warning">
+                                No hay canchas disponibles en este momento.
+                            </div>
+                        </div>
+                    </div>
+                    <input type="hidden" id="canchaId" name="canchaId" required>
+                    <div class="invalid-feedback">
+                        Por favor selecciona una cancha.
+                    </div>
+                </div>
+
+                <!-- Sección de selección de fecha -->
+                <div class="mb-4">
+                    <h5 class="mb-3">2. Selecciona la fecha</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="fecha" class="form-label">Fecha</label>
+                            <input type="date" class="form-control" id="fecha" name="fecha" 
+                                   th:min="${#temporals.format(T(java.time.LocalDate).now(), 'yyyy-MM-dd')}" 
+                                   required>
+                            <div class="invalid-feedback">
+                                Por favor selecciona una fecha válida.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección de selección de horario -->
+                <div class="mb-4">
+                    <h5 class="mb-3">3. Selecciona el horario</h5>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="horaInicio" class="form-label">Hora de inicio</label>
+                            <select class="form-select" id="horaInicio" name="horaInicio" required>
+                                <option value="" selected disabled>-- Selecciona --</option>
+                                <option th:each="hora : ${#numbers.sequence(7, 22)}" 
+                                        th:value="${hora < 10 ? '0' + hora + ':00' : hora + ':00'}"
+                                        th:text="${hora < 10 ? '0' + hora + ':00' : hora + ':00'}">
+                                </option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Por favor selecciona una hora de inicio.
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="horaFin" class="form-label">Hora de fin</label>
+                            <select class="form-select" id="horaFin" name="horaFin" required disabled>
+                                <option value="" selected disabled>-- Primero selecciona la hora de inicio --</option>
+                            </select>
+                            <div class="invalid-feedback">
+                                Por favor selecciona una hora de fin.
+                            </div>
+                        </div>
+                    </div>
+                    <div id="timeSlotsInfo" class="small text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Las reservas tienen una duración mínima de 1 hora y máxima de 4 horas.
+                    </div>
+                </div>
+
+                <!-- Resumen de la reserva -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="mb-0">Resumen de la reserva</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row mb-2">
+                            <div class="col-6 text-muted">Cancha:</div>
+                            <div class="col-6 text-end" id="resumenCancha">-</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-6 text-muted">Fecha:</div>
+                            <div class="col-6 text-end" id="resumenFecha">-</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-6 text-muted">Horario:</div>
+                            <div class="col-6 text-end" id="resumenHorario">-</div>
+                        </div>
+                        <hr>
+                        <div class="row fw-bold">
+                            <div class="col-6">Total a pagar:</div>
+                            <div class="col-6 text-end text-success" id="resumenPrecio">S/. 0.00</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-reservar text-white">
+                        <i class="fas fa-calendar-check me-2"></i>Reservar Ahora
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos del formulario
+            const form = document.getElementById('reservationForm');
+            const courtCards = document.querySelectorAll('.court-card');
+            const canchaIdInput = document.getElementById('canchaId');
+            const fechaInput = document.getElementById('fecha');
+            const horaInicioSelect = document.getElementById('horaInicio');
+            const horaFinSelect = document.getElementById('horaFin');
+
+            // Elementos del resumen
+            const resumenCancha = document.getElementById('resumenCancha');
+            const resumenFecha = document.getElementById('resumenFecha');
+            const resumenHorario = document.getElementById('resumenHorario');
+            const resumenPrecio = document.getElementById('resumenPrecio');
+
+            // Variables para almacenar la selección actual
+            let selectedCourt = null;
+            let precioPorHora = 0;
+
+            // 1. Manejar selección de cancha
+            courtCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    // Remover clase 'selected' de todas las tarjetas
+                    courtCards.forEach(c => c.classList.remove('border-success', 'border-2'));
+
+                    // Agregar clase 'selected' a la tarjeta clickeada
+                    this.classList.add('border-success', 'border-2');
+
+                    // Actualizar datos de la cancha seleccionada
+                    selectedCourt = this;
+                    canchaIdInput.value = this.dataset.id;
+                    precioPorHora = parseFloat(this.dataset.price);
+
+                    // Actualizar resumen
+                    updateResumen();
+                });
+            });
+
+            // 2. Manejar cambio de fecha
+            fechaInput.addEventListener('change', function() {
+                // Validar que la fecha no sea anterior a hoy
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                if (new Date(this.value) < today) {
+                    this.setCustomValidity('La fecha no puede ser anterior a hoy');
+                    this.reportValidity();
+                    this.value = '';
+                    return;
+                }
+
+                updateResumen();
+            });
+
+            // 3. Manejar cambio de hora de inicio
+            horaInicioSelect.addEventListener('change', function() {
+                // Habilitar y actualizar opciones de hora de fin
+                horaFinSelect.innerHTML = '<option value="" selected disabled>-- Selecciona --</option>';
+                horaFinSelect.disabled = !this.value;
+
+                if (!this.value) return;
+
+                const horaInicio = parseInt(this.value.split(':')[0]);
+                const horaMaxFin = Math.min(horaInicio + 4, 23); // Máximo 4 horas
+
+                for (let h = horaInicio + 1; h <= horaMaxFin; h++) {
+                    const option = document.createElement('option');
+                    const horaStr = h < 10 ? '0' + h + ':00' : h + ':00';
+                    option.value = horaStr;
+                    option.textContent = horaStr;
+                    horaFinSelect.appendChild(option);
+                }
+
+                updateResumen();
+            });
+
+            // 4. Manejar cambio de hora de fin
+            horaFinSelect.addEventListener('change', updateResumen);
+
+            // 5. Función para actualizar el resumen
+            function updateResumen() {
+                // Actualizar cancha
+                if (selectedCourt) {
+                    const nombreCancha = selectedCourt.querySelector('.card-title').textContent;
+                    resumenCancha.textContent = nombreCancha;
+                } else {
+                    resumenCancha.textContent = '-';
+                }
+
+                // Actualizar fecha
+                if (fechaInput.value) {
+                    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+                    const fecha = new Date(fechaInput.value);
+                    resumenFecha.textContent = fecha.toLocaleDateString('es-ES', options);
+                } else {
+                    resumenFecha.textContent = '-';
+                }
+
+                // Actualizar horario
+                if (horaInicioSelect.value && horaFinSelect.value) {
+                    resumenHorario.textContent = `${horaInicioSelect.value} - ${horaFinSelect.value}`;
+
+                    // Calcular y actualizar precio total
+                    const horas = parseInt(horaFinSelect.value.split(':')[0]) - parseInt(horaInicioSelect.value.split(':')[0]);
+                    const total = horas * precioPorHora;
+                    resumenPrecio.textContent = `S/. ${total.toFixed(2)}`;
+                } else if (horaInicioSelect.value) {
+                    resumenHorario.textContent = `${horaInicioSelect.value} - --:--`;
+                    resumenPrecio.textContent = 'S/. 0.00';
+                } else {
+                    resumenHorario.textContent = '-';
+                    resumenPrecio.textContent = 'S/. 0.00';
+                }
+            }
+
+            // 6. Validación del formulario antes de enviar
+            form.addEventListener('submit', function(event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+
+                form.classList.add('was-validated');
+            });
+
+            // Auto seleccionar si hay una sola cancha (caso cuando se viene de index)
+            if (courtCards.length === 1) {
+                courtCards[0].click();
+            }
+        });
+    </script>
+</body>
+</html>
+
+
+
+

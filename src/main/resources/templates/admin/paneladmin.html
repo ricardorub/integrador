@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:with="activeMenu='dashboard'">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Panel de Administración</title>
+		<!-- Bootstrap CSS -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+		<!-- Bootstrap Icons -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+		<style>
+			body {
+				background-color: #f8f9fa;
+			}
+			.sidebar {
+				background: linear-gradient(180deg, #343a40 0%, #212529 100%);
+				color: white;
+				height: 100vh;
+				position: fixed;
+			}
+			.card {
+				transition: transform 0.3s ease, box-shadow 0.3s ease;
+				border: none;
+				border-radius: 10px;
+				overflow: hidden;
+			}
+			.card:hover {
+				transform: translateY(-5px);
+				box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+			}
+			.card-title {
+				font-weight: 600;
+			}
+			.stat-number {
+				font-size: 2rem;
+				font-weight: 700;
+			}
+			.main-content {
+				margin-left: 280px;
+				padding: 20px;
+			}
+			@media (max-width: 992px) {
+				.main-content {
+					margin-left: 0;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="d-flex">
+			<!-- Sidebar -->
+			<div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+			<!-- Main Content -->
+			<main class="main-content col-md-9 ms-sm-auto col-lg-10 px-md-4">
+				<div
+					class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+					<h1 class="h2">Panel de Control</h1>
+					<div class="btn-toolbar mb-2 mb-md-0">
+            <div class="btn-group me-2" sec:authorize="isAuthenticated()">
+							<form th:action="@{/logout}" method="post" class="d-inline">
+								<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+								<button type="submit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-box-arrow-right"></i> Cerrar Sesión</button>
+							</form>
+						</div>
+						<div class="btn-group me-2">
+							<button type="button" class="btn btn-sm btn-outline-secondary"><i class="bi bi-calendar"></i> Hoy</button>
+						</div>
+					</div>
+				</div>
+
+				<!-- Summary Cards -->
+				<div class="row mb-4">
+					<div class="col-md-6 col-lg-3 mb-4">
+						<div class="card text-white bg-primary">
+							<div class="card-body">
+								<div class="d-flex justify-content-between align-items-center">
+									<div>
+										<h5 class="card-title">Usuarios</h5>
+										<h2 class="stat-number" th:text="${totalUsuarios}">0</h2>
+									</div>
+									<i class="bi bi-people-fill" style="font-size: 2.5rem; opacity: 0.3"></i>
+								</div>
+								<a href="/admin/usuarios" class="text-white stretched-link"></a>
+							</div>
+							<div class="card-footer bg-primary-dark" style="background-color: rgba(0, 0, 0, 0.1)">
+								<small class="d-flex justify-content-between align-items-center">
+									<span>Ver detalles</span>
+									<i class="bi bi-arrow-right"></i>
+								</small>
+							</div>
+						</div>
+					</div>
+
+					<div class="col-md-6 col-lg-3 mb-4">
+						<div class="card text-white bg-success">
+							<div class="card-body">
+								<div class="d-flex justify-content-between align-items-center">
+									<div>
+										<h5 class="card-title">Canchas</h5>
+										<h2 class="stat-number" th:text="${totalCanchas}">0</h2>
+									</div>
+									<i class="bi bi-pin-map-fill" style="font-size: 2.5rem; opacity: 0.3"></i>
+								</div>
+								<a href="/admin/canchas" class="text-white stretched-link"></a>
+							</div>
+							<div class="card-footer" style="background-color: rgba(0, 0, 0, 0.1)">
+								<small class="d-flex justify-content-between align-items-center">
+									<span>Ver detalles</span>
+									<i class="bi bi-arrow-right"></i>
+								</small>
+							</div>
+						</div>
+					</div>
+
+					<div class="col-md-6 col-lg-3 mb-4">
+						<div class="card text-white bg-info">
+							<div class="card-body">
+								<div class="d-flex justify-content-between align-items-center">
+									<div>
+										<h5 class="card-title">Reservas Hoy</h5>
+										<h2 class="stat-number" th:text="${reservasHoy}">0</h2>
+									</div>
+									<i class="bi bi-calendar-check-fill" style="font-size: 2.5rem; opacity: 0.3"></i>
+								</div>
+								<a href="/admin/reservas" class="text-white stretched-link"></a>
+							</div>
+							<div class="card-footer" style="background-color: rgba(0, 0, 0, 0.1)">
+								<small class="d-flex justify-content-between align-items-center">
+									<span>Ver detalles</span>
+									<i class="bi bi-arrow-right"></i>
+								</small>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="col-md-6 mb-4">
+					<div class="card">
+						<div class="card-header">
+							<h5 class="mb-0"><i class="bi bi-graph-up me-2"></i>Estadísticas</h5>
+							</div>
+							<div class="card-body">
+								<canvas id="statsChart" height="200"></canvas>
+							</div>
+						</div>
+					</div>
+				</div>
+			</main>
+		</div>
+
+		<!-- Bootstrap Bundle with Popper -->
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+		<!-- Chart.js -->
+		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+		<script>
+			// Sample chart - replace with your actual data
+			const ctx = document.getElementById("statsChart").getContext("2d");
+			const myChart = new Chart(ctx, {
+				type: "bar",
+				data: {
+					labels: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
+					datasets: [
+						{
+							label: "Reservas esta semana",
+							data: [12, 19, 15, 20, 25, 30, 28],
+							backgroundColor: "rgba(54, 162, 235, 0.5)",
+							borderColor: "rgba(54, 162, 235, 1)",
+							borderWidth: 1,
+						},
+					],
+				},
+				options: {
+					responsive: true,
+					plugins: {
+						legend: {
+							display: false,
+						},
+					},
+					scales: {
+						y: {
+							beginAtZero: true,
+						},
+					},
+				},
+			});
+		</script>
+	</body>
+</html>

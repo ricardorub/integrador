@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Mis Reservas - Peloteros</title>
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <!-- Custom CSS -->
+        <style>
+            :root {
+                --primary-green: #2e7d32;
+                --secondary-green: #81c784;
+                --light-green: #f1f8e9;
+                --orange: #fb8c00;
+                --light-gray: #f5f5f5;
+            }
+
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #f9f9f9;
+            }
+
+            .header {
+                background-color: white;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                padding: 15px 0;
+                margin-bottom: 30px;
+            }
+
+            .main-container {
+                display: flex;
+                min-height: calc(100vh - 100px);
+            }
+
+            .reservations-section {
+                flex: 1;
+            }
+
+            .profile-section {
+                flex: 0 0 350px;
+                padding-left: 30px;
+            }
+
+            .section-title {
+                font-size: 1.8rem;
+                font-weight: bold;
+                margin-bottom: 25px;
+                color: var(--primary-green);
+            }
+
+            .nav-tabs {
+                border-bottom: 2px solid #dee2e6;
+                margin-bottom: 30px;
+            }
+
+            .nav-tabs .nav-link {
+                border: none;
+                color: #666;
+                font-weight: 500;
+                padding: 10px 20px;
+                margin-right: 5px;
+            }
+
+            .nav-tabs .nav-link.active {
+                color: var(--primary-green);
+                background-color: transparent;
+                border-bottom: 3px solid var(--primary-green);
+            }
+
+            .card {
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                margin-bottom: 20px;
+                border: none;
+            }
+
+            .reservation-card {
+                transition: all 0.3s;
+            }
+
+            .reservation-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            }
+
+            .reservation-header {
+                background-color: var(--light-green);
+                padding: 15px 20px;
+                border-bottom: 1px solid #dee2e6;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+
+            .reservation-date {
+                font-weight: bold;
+                color: var(--primary-green);
+                font-size: 1.1rem;
+            }
+
+            .reservation-status {
+                padding: 5px 10px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                font-weight: 500;
+            }
+
+            .status-confirmed {
+                background-color: #e8f5e9;
+                color: var(--primary-green);
+            }
+
+            .status-pending {
+                background-color: #fff8e1;
+                color: #ff8f00;
+            }
+
+            .status-canceled {
+                background-color: #ffebee;
+                color: #c62828;
+            }
+
+            .reservation-body {
+                padding: 20px;
+            }
+
+            .reservation-detail {
+                display: flex;
+                margin-bottom: 15px;
+            }
+
+            .detail-label {
+                flex: 0 0 120px;
+                font-weight: bold;
+                color: #666;
+            }
+
+            .detail-value {
+                flex: 1;
+                color: #333;
+            }
+
+            .reservation-actions {
+                display: flex;
+                justify-content: flex-end;
+                gap: 10px;
+                padding-top: 15px;
+                border-top: 1px solid #eee;
+                margin-top: 15px;
+            }
+
+            .no-reservations {
+                text-align: center;
+                padding: 50px 20px;
+                background-color: white;
+                border-radius: 10px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            .no-reservations-icon {
+                font-size: 5rem;
+                color: #ccc;
+                margin-bottom: 20px;
+            }
+
+            .no-reservations-title {
+                font-size: 1.5rem;
+                color: #555;
+                margin-bottom: 10px;
+            }
+
+            .no-reservations-subtitle {
+                color: #777;
+                font-size: 1rem;
+                margin-bottom: 20px;
+            }
+
+            .profile-card {
+                position: sticky;
+                top: 20px;
+            }
+
+            .profile-avatar {
+                width: 80px;
+                height: 80px;
+                border-radius: 50%;
+                background-color: #2196F3;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 2rem;
+                font-weight: bold;
+                margin: 0 auto 15px;
+            }
+
+            .profile-info {
+                margin-bottom: 20px;
+            }
+
+            .profile-stat {
+                display: flex;
+                justify-content: space-between;
+                padding: 10px 0;
+                border-bottom: 1px solid #eee;
+            }
+
+            .stat-label {
+                color: #666;
+            }
+
+            .stat-value {
+                font-weight: 500;
+            }
+
+            @media (max-width: 992px) {
+                .main-container {
+                    flex-direction: column;
+                }
+
+                .profile-section {
+                    padding-left: 0;
+                    flex: 1;
+                    order: -1;
+                    margin-bottom: 30px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <!-- Encabezado -->
+        <div class="header">
+            <div class="container">
+                <div class="d-flex justify-content-between align-items-center">
+                    <a th:href="@{/}" class="text-decoration-none text-dark">
+                        <div class="logo-container d-flex align-items-center">
+                            <img th:src="@{/img/logo.png}" alt="Peloteros" class="logo" height="40">
+                            <span class="ms-2 fw-bold">Peloteros</span>
+                        </div>
+                    </a>
+                    <div class="d-flex align-items-center">
+                        <a th:href="@{/reserva/reservar}" class="btn btn-success me-3">
+                            <i class="fas fa-calendar-plus me-1"></i> Nueva Reserva
+                        </a>
+                        <a th:href="@{/usuario/login}" class="btn btn-outline-secondary">
+                            <i class="fas fa-sign-out-alt me-1"></i> Inicio
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenido principal -->
+        <div class="container mb-5">
+            <div class="main-container">
+                <!-- Sección de reservas -->
+                <div class="reservations-section">
+                    <h1 class="section-title">Mis Reservas</h1>
+
+                    <ul class="nav nav-tabs" id="reservationsTab">
+                        <li class="nav-item">
+                            <a class="nav-link active" data-bs-toggle="tab" href="#active">Activas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#past">Confirmadas</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" data-bs-toggle="tab" href="#canceled">Canceladas</a>
+                        </li>
+                    </ul>
+
+                   <div class="tab-content" id="reservationsTabContent">
+    <!-- Pestaña de reservas activas (solo pendientes) -->
+    <div class="tab-pane fade show active" id="active">
+        <!-- Caso 1: Cuando hay reservas activas -->
+        <div th:unless="${#lists.isEmpty(reservasActivas)}">
+            <div th:each="reserva : ${reservasActivas}">
+                <div class="card reservation-card">
+                    <div class="reservation-header">
+                        <div class="reservation-date" th:text="${#temporals.format(reserva.fechaHoraInicio, 'EEEE, d MMMM yyyy')}"></div>
+                        <div class="reservation-status status-pending" th:text="${reserva.estado}"></div>
+                    </div>
+                    <div class="reservation-body">
+                        <div class="reservation-detail">
+                            <div class="detail-label">Cancha:</div>
+                            <div class="detail-value" th:text="${reserva.cancha.nombre} + ' - ' + ${reserva.cancha.tipo}"></div>
+                        </div>
+                        <div class="reservation-detail">
+                            <div class="detail-label">Horario:</div>
+                            <div class="detail-value" th:text="${#temporals.format(reserva.fechaHoraInicio, 'HH:mm')} + ' - ' + ${#temporals.format(reserva.fechaHoraFin, 'HH:mm')}"></div>
+                        </div>
+                        <div class="reservation-detail">
+                            <div class="detail-label">Precio:</div>
+                            <div class="detail-value" th:text="'S/ ' + ${#numbers.formatDecimal(reserva.precioTotal, 1, 2)}"></div>
+                        </div>
+                        <div class="reservation-actions">
+                            <a th:href="@{'/reserva/confirmacion?reservaId=' + ${reserva.id}}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i> Ver Detalle
+                            </a>
+                            <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" 
+                                    data-bs-target="#cancelModal" 
+                                    th:attr="data-reserva-id=${reserva.id}">
+                                <i class="fas fa-times me-1"></i> Cancelar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Caso 2: Cuando NO hay reservas activas -->
+        <div th:if="${#lists.isEmpty(reservasActivas)}" class="no-reservations">
+            <div class="no-reservations-icon">
+                <i class="far fa-calendar-check"></i>
+            </div>
+            <h3 class="no-reservations-title">No tienes reservas activas</h3>
+            <p class="no-reservations-subtitle">Cuando realices una reserva, aparecerá aquí</p>
+            <a th:href="@{/reserva/reservar}" class="btn btn-primary">
+                <i class="fas fa-calendar-plus me-2"></i>Reservar Ahora
+            </a>
+        </div>
+    </div>
+
+    <!-- Pestaña de reservas confirmadas -->
+    <div class="tab-pane fade" id="past">
+        <div th:if="${#lists.isEmpty(reservasConfirmadas)}" class="no-reservations">
+            <div class="no-reservations-icon">
+                <i class="far fa-calendar-minus"></i>
+            </div>
+            <h3 class="no-reservations-title">No tienes reservas Confirmadas</h3>
+            <p class="no-reservations-subtitle">Tus reservas completadas aparecerán aquí</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(reservasConfirmadas)}">
+            <div th:each="reserva : ${reservasConfirmadas}">
+                <div class="card reservation-card">
+                    <div class="reservation-header">
+                        <div class="reservation-date" th:text="${#temporals.format(reserva.fechaHoraInicio, 'EEEE, d MMMM yyyy')}"></div>
+                        <div class="reservation-status status-completed">COMPLETADA</div>
+                    </div>
+                    <div class="reservation-body">
+                        <div class="reservation-detail">
+                            <div class="detail-label">Cancha:</div>
+                            <div class="detail-value" th:text="${reserva.cancha.nombre} + ' - ' + ${reserva.cancha.tipo}"></div>
+                        </div>
+                        <div class="reservation-detail">
+                            <div class="detail-label">Horario:</div>
+                            <div class="detail-value" th:text="${#temporals.format(reserva.fechaHoraInicio, 'HH:mm')} + ' - ' + ${#temporals.format(reserva.fechaHoraFin, 'HH:mm')}"></div>
+                        </div>
+                        <div class="reservation-detail">
+                            <div class="detail-label">Precio:</div>
+                            <div class="detail-value" th:text="'S/ ' + ${#numbers.formatDecimal(reserva.precioTotal, 1, 2)}"></div>
+                        </div>
+                        <div class="reservation-actions">
+                            <a th:href="@{'/reserva/confirmacion?reservaId=' + ${reserva.id}}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i> Ver Detalle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pestaña de reservas canceladas -->
+    <div class="tab-pane fade" id="canceled">
+        <div th:if="${#lists.isEmpty(reservasCanceladas)}" class="no-reservations">
+            <div class="no-reservations-icon">
+                <i class="far fa-calendar-times"></i>
+            </div>
+            <h3 class="no-reservations-title">No tienes reservas canceladas</h3>
+            <p class="no-reservations-subtitle">Tus reservas canceladas aparecerán aquí</p>
+        </div>
+
+        <div th:unless="${#lists.isEmpty(reservasCanceladas)}">
+            <div th:each="reserva : ${reservasCanceladas}">
+                <div class="card reservation-card">
+                    <div class="reservation-header">
+                        <div class="reservation-date" th:text="${#temporals.format(reserva.fechaHoraInicio, 'EEEE, d MMMM yyyy')}"></div>
+                        <div class="reservation-status status-canceled" th:text="${reserva.estado}"></div>
+                    </div>
+                    <div class="reservation-body">
+                        <div class="reservation-detail">
+                            <div class="detail-label">Cancha:</div>
+                            <div class="detail-value" th:text="${reserva.cancha.nombre} + ' - ' + ${reserva.cancha.tipo}"></div>
+                        </div>
+                        <div class="reservation-detail">
+                            <div class="detail-label">Horario:</div>
+                            <div class="detail-value" th:text="${#temporals.format(reserva.fechaHoraInicio, 'HH:mm')} + ' - ' + ${#temporals.format(reserva.fechaHoraFin, 'HH:mm')}"></div>
+                        </div>
+                        <div class="reservation-detail">
+                            <div class="detail-label">Precio:</div>
+                            <div class="detail-value" th:text="'S/ ' + ${#numbers.formatDecimal(reserva.precioTotal, 1, 2)}"></div>
+                        </div>
+                        <div class="reservation-actions">
+                            <a th:href="@{'/reserva/confirmacion?reservaId=' + ${reserva.id}}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i> Ver Detalle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    .reservation-status {
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-weight: bold;
+    font-size: 0.8rem;
+}
+
+.status-pending {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.status-completed {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.status-canceled {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+</style>
+
+                    </div>
+                </div>
+            <!-- Sección de perfil -->
+            <div class="profile-section">
+                <div class="card profile-card">
+                    <div class="card-body text-center">
+                        <div class="profile-avatar" th:text="${usuario.nombre.substring(0,1)}">
+                            <span th:text="${usuario.nombre.substring(0,1)}"></span>
+                        </div>
+                        <h4 th:text="${usuario.nombre}"></h4>
+                        <p class="text-muted" th:text="${usuario.email}"></p>
+
+                        <div class="profile-info">
+                            <div class="profile-stat">
+                                <span class="stat-label">Reservas activas</span>
+                                <span class="stat-value" th:text="${reservasActivas.size()}"></span>
+                            </div>
+                            <div class="profile-stat">
+                                <span class="stat-label">Reservas confirmadas</span>
+                                <span class="stat-value" th:text="${reservasConfirmadas.size()}"></span>
+                            </div>
+                            <div class="profile-stat">
+                                <span class="stat-label">Miembro</span>
+                                <span class="stat-value">Activo</span>
+                            </div>
+                        </div>
+
+                        <a th:href="@{/perfil}" class="btn btn-outline-primary w-100 mb-3">
+                            <i class="fas fa-user-edit me-2"></i>Editar Perfil
+                        </a>
+                        <form th:action="@{/logout}" method="post" class="w-100" sec:authorize="isAuthenticated()">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-sign-out-alt me-2"></i>Cerrar Sesión
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title"><i class="fas fa-trophy me-2"></i>Promociones</h5>
+                        <div class="alert alert-success mt-3">
+                            <strong>Descuento del 10%</strong> en reservas los días miércoles.
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <strong>Pack 5 reservas:</strong> Obtén un 15% de descuento al reservar 5 veces en un mes.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de cancelación -->
+    <div class="modal fade" id="cancelModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Cancelación</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Estás seguro de que deseas cancelar esta reserva?</p>
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Cancelaciones con menos de 24 horas de anticipación no son reembolsables.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No, mantener reserva</button>
+                    <form th:action="@{/reserva/cancelar-reserva}" method="post" id="cancelForm">
+                        <input type="hidden" name="reservaId" id="modalReservaId">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                        <button type="submit" class="btn btn-danger">Sí, cancelar reserva</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Configurar modal de cancelación
+            const cancelModal = document.getElementById('cancelModal');
+            if (cancelModal) {
+                cancelModal.addEventListener('show.bs.modal', function (event) {
+                    const button = event.relatedTarget;
+                    const reservaId = button.getAttribute('data-reserva-id');
+                    document.getElementById('modalReservaId').value = reservaId;
+                });
+            }
+
+            // Mostrar pestaña activa según hash de URL
+            const urlHash = window.location.hash;
+            if (urlHash) {
+                const tabTrigger = document.querySelector(`[href="${urlHash}"]`);
+                if (tabTrigger) {
+                    new bootstrap.Tab(tabTrigger).show();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+

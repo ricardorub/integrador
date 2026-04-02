@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:with="activeMenu='reservas'">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Gestión de Reservas - Panel de Administración</title>
+
+		<!-- Bootstrap CSS -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+		<!-- Bootstrap Icons -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+		<style>
+			body {
+				background-color: #f8f9fa;
+			}
+			.sidebar {
+				background: linear-gradient(180deg, #343a40 0%, #212529 100%);
+				color: white;
+				height: 100vh;
+				position: fixed;
+			}
+			.card {
+				transition: transform 0.3s ease, box-shadow 0.3s ease;
+				border: none;
+				border-radius: 10px;
+				overflow: hidden;
+			}
+			.card:hover {
+				transform: translateY(-5px);
+				box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+			}
+			.card-title {
+				font-weight: 600;
+			}
+			.main-content {
+				margin-left: 280px;
+				padding: 20px;
+				width: calc(100% - 280px);
+				max-width: 100%;
+				box-sizing: border-box;
+			}
+			@media (max-width: 992px) {
+				.main-content {
+					margin-left: 0;
+					width: 100%;
+				}
+			}
+			/* Existing styles */
+			.status-badge {
+				padding: 0.35em 0.65em;
+				border-radius: 50rem;
+				font-size: 0.85em;
+				font-weight: 500;
+				display: inline-block;
+			}
+			.status-pendiente {
+				background-color: #fff3cd;
+				color: #856404;
+			}
+			.status-confirmada {
+				background-color: #d4edda;
+				color: #155724;
+			}
+			.status-cancelada {
+				background-color: #f8d7da;
+				color: #721c24;
+			}
+			.table-hover tbody tr:hover {
+				background-color: rgba(0, 0, 0, 0.03);
+			}
+			.btn {
+				border-radius: 10px;
+			}
+			.form-label {
+				font-weight: 600;
+			}
+			.btn-sm i {
+				font-size: 1rem;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="d-flex">
+			<!-- Sidebar -->
+			<div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+			<!-- Main Content -->
+			<main class="main-content">
+				<div
+					class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+					<h1 class="h2"><i class="bi bi-calendar-check me-2"></i> Gestion de Reservas</h1>
+				</div>
+
+				<!-- Mensajes -->
+				<div th:if="${success}" class="alert alert-success alert-dismissible fade show">
+					<i class="bi bi-check-circle-fill me-2"></i>
+					<span th:text="${success}"></span>
+					<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+				</div>
+
+				<!-- Filtros -->
+				<div class="card mb-4">
+					<div class="card-body">
+						<form method="get" th:action="@{/admin/reservas}" class="row g-3">
+							<div class="col-md-4">
+								<label class="form-label">Fecha</label>
+								<input type="date" name="fecha" th:value="${fecha}" class="form-control" />
+							</div>
+							<div class="col-md-4">
+								<label class="form-label">Cancha</label>
+								<select name="canchaId" class="form-select">
+									<option value="">Todas</option>
+									<option
+										th:each="cancha : ${canchas}"
+										th:value="${cancha.id}"
+										th:text="${cancha.nombre}"
+										th:selected="${canchaSeleccionada != null and cancha.id == canchaSeleccionada.id}"></option>
+								</select>
+							</div>
+							<div class="col-md-4 d-flex align-items-end">
+								<button type="submit" class="btn btn-primary me-2 shadow-sm">
+									<i class="bi bi-funnel me-1"></i> Filtrar
+								</button>
+								<a th:href="@{/admin/reservas}" class="btn btn-outline-secondary shadow-sm">
+									<i class="bi bi-arrow-counterclockwise me-1"></i> Limpiar
+								</a>
+							</div>
+						</form>
+					</div>
+				</div>
+
+				<!-- Tabla de Reservas -->
+				<div class="card">
+					<div class="card-body p-0">
+						<div class="table-responsive">
+							<table class="table table-hover mb-0 align-middle">
+								<thead class="table-light">
+									<tr>
+										<th>Usuario</th>
+										<th>Cancha</th>
+										<th>Fecha/Hora</th>
+										<th>Precio</th>
+										<th>Estado</th>
+										<th>Acciones</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr th:each="reserva : ${reservas}">
+										<td th:text="${reserva.usuario.nombre}">Usuario</td>
+										<td th:text="${reserva.cancha.nombre}">Cancha</td>
+										<td>
+											<div th:text="${#temporals.format(reserva.fechaHoraInicio, 'dd/MM/yyyy')}"></div>
+											<small
+												class="text-muted"
+												th:text="${#temporals.format(reserva.fechaHoraInicio, 'HH:mm')} + ' - ' + ${#temporals.format(reserva.fechaHoraFin, 'HH:mm')}"></small>
+										</td>
+										<td th:text="${'S/ ' + reserva.precioTotal}">Precio</td>
+										<td>
+											<span
+												th:class="${reserva.estado == 'PENDIENTE'} ? 'status-badge status-pendiente' : 
+                                (${reserva.estado == 'CONFIRMADA'} ? 'status-badge status-confirmada' : 
+                                'status-badge status-cancelada')"
+												th:text="${reserva.estado}"></span>
+										</td>
+										<td>
+											<div class="d-flex gap-2">
+												<form th:action="@{'/admin/reservas/' + ${reserva.id} + '/confirmar'}" method="post">
+													<button type="submit" class="btn btn-sm btn-success" th:if="${reserva.estado == 'PENDIENTE'}">
+														<i class="bi bi-check-circle"></i>
+													</button>
+												</form>
+												<form th:action="@{'/admin/reservas/' + ${reserva.id} + '/cancelar'}" method="post">
+													<input type="hidden" name="motivo" value="Cancelado por el administrador" />
+													<button type="submit" class="btn btn-sm btn-danger" th:if="${reserva.estado != 'CANCELADA'}">
+														<i class="bi bi-x-circle"></i>
+													</button>
+												</form>
+											</div>
+										</td>
+									</tr>
+									<tr th:if="${reservas.isEmpty()}">
+										<td colspan="6" class="text-center text-muted py-4">No se encontraron reservas</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</main>
+		</div>
+
+		<!-- Bootstrap Bundle with Popper -->
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	</body>
+</html>

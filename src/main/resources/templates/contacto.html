@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<!--
+Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+Click nbfs://nbhost/SystemFileSystem/Templates/Other/html.html to edit this template
+-->
+<html>
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Club Peloteros</title>
+		<!-- Bootstrap CSS -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+		<!-- Font Awesome -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+		<style>
+			.contact-info-icon {
+				width: 50px;
+				height: 50px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				font-size: 1.5rem;
+			}
+
+			.social-links .btn {
+				width: 50px;
+				height: 50px;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 0;
+			}
+
+			.map-container {
+				border-radius: 8px;
+				overflow: hidden;
+				box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+			}
+
+			.accordion-button:not(.collapsed) {
+				background-color: #f8f9fa;
+				color: #0d6efd;
+			}
+
+			.accordion-button:focus {
+				box-shadow: none;
+				border-color: rgba(0, 0, 0, 0.125);
+			}
+			.form-control,
+			.form-select {
+				padding: 10px 15px;
+				border-radius: 8px;
+			}
+
+			.form-control:focus,
+			.form-select:focus {
+				border-color: #86b7fe;
+				box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+			}
+
+			.btn-primary {
+				padding: 10px 25px;
+				border-radius: 8px;
+				font-weight: 500;
+			}
+
+			/* Responsive adjustments */
+			@media (max-width: 768px) {
+				.contact-method {
+					text-align: center;
+					margin-bottom: 2rem;
+				}
+
+				.contact-method .d-flex {
+					justify-content: center;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #2e7d32">
+			<div class="container">
+				<a class="navbar-brand" href="/">
+					<img th:src="@{/img/logo.png}" alt="Peloteros" height="40" class="d-inline-block align-text-top" />
+				</a>
+				<button
+					class="navbar-toggler"
+					type="button"
+					data-bs-toggle="collapse"
+					data-bs-target="#navbarNavSecured"
+					aria-controls="navbarNavSecured"
+					aria-expanded="false"
+					aria-label="Toggle navigation">
+					<span class="navbar-toggler-icon"></span>
+				</button>
+				<div class="collapse navbar-collapse" id="navbarNavSecured">
+					<ul class="navbar-nav me-auto">
+						<!-- Added me-auto for main links -->
+						<li class="nav-item">
+							<a class="nav-link" th:href="@{/}">Inicio</a>
+						</li>
+						<li class="nav-item">
+							<a class="nav-link" th:href="@{/home/eventos}">Eventosss</a>
+							<!-- Assuming /home/eventos, adjust if different -->
+						</li>
+						<li class="nav-item">
+							<a class="nav-link active" th:href="@{/home/contacto}">Contacto</a>
+							<!-- Assuming /home/contacto, adjust if different -->
+						</li>
+					</ul>
+					<ul class="navbar-nav ms-auto">
+						<!-- For Anonymous Users -->
+						<li class="nav-item" sec:authorize="isAnonymous()">
+							<a class="nav-link" th:href="@{/usuario/login}">
+								<i class="fas fa-sign-in-alt me-1"></i> Iniciar Sesión
+							</a>
+						</li>
+						<li class="nav-item" sec:authorize="isAnonymous()">
+							<a class="nav-link" th:href="@{/usuario/home/registro}">
+								<i class="fas fa-user-plus me-1"></i> Registrarse
+							</a>
+						</li>
+
+						<!-- For Authenticated Users -->
+						<li class="nav-item" sec:authorize="isAuthenticated()">
+							<span class="nav-link"> Bienvenido, <span sec:authentication="principal.username"></span> </span>
+						</li>
+						<li class="nav-item" sec:authorize="isAuthenticated()">
+							<a class="nav-link" th:href="@{/reserva/misreservas}">
+								<i class="fas fa-calendar-alt me-1"></i> Mis Reservas
+							</a>
+						</li>
+						<li class="nav-item" sec:authorize="hasRole('ADMIN')">
+							<a class="nav-link" th:href="@{/admin/users}"> <i class="fas fa-user-shield me-1"></i> Admin Panel </a>
+						</li>
+						<li class="nav-item" sec:authorize="isAuthenticated()">
+							<form th:action="@{/logout}" method="post" class="d-inline">
+								<input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+								<button type="submit" class="nav-link btn btn-link" style="color: white; text-decoration: none">
+									<i class="fas fa-sign-out-alt me-1"></i>Cerrar Sesión
+								</button>
+							</form>
+						</li>
+					</ul>
+				</div>
+			</div>
+		</nav>
+		<div class="container mt-3">
+			<div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+				<span th:text="${successMessage}"></span>
+				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+			</div>
+			<div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+				<span th:text="${errorMessage}"></span>
+				<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+			</div>
+		</div>
+		<!-- Page Header -->
+		<header class="page-header py-5 bg-primary text-white">
+			<div class="container">
+				<div class="row">
+					<div class="col-12 text-center">
+						<h1>Contacto</h1>
+						<p class="lead">Estamos aquí para ayudarte. ¡Contáctanos!</p>
+					</div>
+				</div>
+			</div>
+		</header>
+
+		<!-- Main Content -->
+		<main class="container my-5">
+			<div class="row">
+				<!-- Contact Info -->
+				<div class="col-lg-5">
+					<div class="card shadow-sm mb-4">
+						<div class="card-body p-5">
+							<h2 class="mb-4">Información de Contacto</h2>
+							<ul class="list-unstyled">
+								<li class="mb-4">
+									<div class="d-flex">
+										<div class="me-3 text-primary">
+											<i class="fas fa-map-marker-alt fa-2x"></i>
+										</div>
+										<div>
+											<h3 class="h5">Dirección</h3>
+											<p>Av. Deportiva 123, Ciudad Deportiva<br />Col. Las Canchas, CP 45678</p>
+										</div>
+									</div>
+								</li>
+								<li class="mb-4">
+									<div class="d-flex">
+										<div class="me-3 text-primary">
+											<i class="fas fa-phone fa-2x"></i>
+										</div>
+										<div>
+											<h3 class="h5">Teléfonos</h3>
+											<p>
+												Reservaciones: <a href="tel:+521234567890">(123) 456-7890</a><br />
+												Administración: <a href="tel:+521234567891">(123) 456-7891</a>
+											</p>
+										</div>
+									</div>
+								</li>
+								<li class="mb-4">
+									<div class="d-flex">
+										<div class="me-3 text-primary">
+											<i class="fas fa-envelope fa-2x"></i>
+										</div>
+										<div>
+											<h3 class="h5">Correo Electrónico</h3>
+											<p>
+												General: <a href="mailto:info@sportpoint.com">info@Peloteros.com</a><br />
+												Reservaciones: <a href="mailto:reservaciones@sportpoint.com">reservaciones@Peloteros.com</a>
+											</p>
+										</div>
+									</div>
+								</li>
+								<li>
+									<div class="d-flex">
+										<div class="me-3 text-primary">
+											<i class="fas fa-clock fa-2x"></i>
+										</div>
+										<div>
+											<h3 class="h5">Horario de Atención</h3>
+											<p>
+												Lunes a Viernes: 8:00 - 22:00 hrs<br />
+												Sábados y Domingos: 7:00 - 20:00 hrs
+											</p>
+										</div>
+									</div>
+								</li>
+							</ul>
+						</div>
+					</div>
+					<!-- Social Media -->
+					<div class="card shadow-sm">
+						<div class="card-body p-5">
+							<h2 class="mb-4">Síguenos en Redes</h2>
+							<div class="social-links d-flex justify-content-center gap-3">
+								<a href="#" class="btn btn-outline-primary btn-lg rounded-circle">
+									<i class="fab fa-facebook-f"></i>
+								</a>
+								<a href="#" class="btn btn-outline-primary btn-lg rounded-circle">
+									<i class="fab fa-instagram"></i>
+								</a>
+								<a href="#" class="btn btn-outline-primary btn-lg rounded-circle">
+									<i class="fab fa-twitter"></i>
+								</a>
+								<a href="#" class="btn btn-outline-primary btn-lg rounded-circle">
+									<i class="fab fa-youtube"></i>
+								</a>
+								<a href="#" class="btn btn-outline-primary btn-lg rounded-circle">
+									<i class="fab fa-whatsapp"></i>
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- Map Section -->
+			<section class="my-5">
+				<div class="card shadow-sm">
+					<div class="card-body p-0">
+						<div class="ratio ratio-16x9">
+							<iframe
+								src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3762.8882445525436!2d-99.1776906845266!3d19.42651124591938!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x85d1ff35f5bd1563%3A0x6c366f0e2de02ff7!2sEl%20%C3%81ngel%20de%20la%20Independencia!5e0!3m2!1ses-419!2smx!4v1621552176348!5m2!1ses-419!2smx"
+								style="border: 0"
+								allowfullscreen=""
+								loading="lazy"></iframe>
+						</div>
+					</div>
+					<div class="card-footer bg-white">
+						<div class="row">
+							<div class="col-md-6">
+								<h3 class="h5">Cómo llegar</h3>
+								<p>Estamos ubicados en la zona deportiva de la ciudad, con fácil acceso desde cualquier punto.</p>
+							</div>
+							<div class="col-md-6">
+								<h3 class="h5">Transporte público</h3>
+								<ul>
+									<li>Metrobús Línea 1 - Estación Deportiva</li>
+									<li>Metro Línea 3 - Estación Canchas</li>
+									<li>Rutas de autobús: 12, 45, 78</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+
+			<!-- FAQ Section -->
+			<section class="my-5">
+				<div class="text-center mb-5">
+					<h2>Preguntas Frecuentes</h2>
+					<p class="lead">Encuentra respuestas a las preguntas más comunes</p>
+				</div>
+				<div class="accordion" id="faqAccordion">
+					<div class="accordion-item">
+						<h3 class="accordion-header" id="headingOne">
+							<button
+								class="accordion-button"
+								type="button"
+								data-bs-toggle="collapse"
+								data-bs-target="#collapseOne"
+								aria-expanded="true"
+								aria-controls="collapseOne">
+								¿Cómo puedo reservar una cancha?
+							</button>
+						</h3>
+						<div
+							id="collapseOne"
+							class="accordion-collapse collapse show"
+							aria-labelledby="headingOne"
+							data-bs-parent="#faqAccordion">
+							<div class="accordion-body">
+								Puedes reservar una cancha directamente desde nuestro sitio web en la sección de
+								<a href="canchas.html">Canchas</a>, seleccionando la cancha, fecha y hora que desees. También puedes
+								llamar a nuestro centro de reservaciones al <a href="tel:+521234567890">(123) 456-7890</a> o visitarnos
+								en persona.
+							</div>
+						</div>
+					</div>
+					<div class="accordion-item">
+						<h3 class="accordion-header" id="headingTwo">
+							<button
+								class="accordion-button collapsed"
+								type="button"
+								data-bs-toggle="collapse"
+								data-bs-target="#collapseTwo"
+								aria-expanded="false"
+								aria-controls="collapseTwo">
+								¿Cuál es la política de cancelación?
+							</button>
+						</h3>
+						<div
+							id="collapseTwo"
+							class="accordion-collapse collapse"
+							aria-labelledby="headingTwo"
+							data-bs-parent="#faqAccordion">
+							<div class="accordion-body">
+								Las cancelaciones con más de 24 horas de anticipación reciben un reembolso del 100%. Para cancelaciones
+								entre 24 y 12 horas antes de la reservación, se aplica un cargo del 50%. Cancelaciones con menos de 12
+								horas de anticipación no son reembolsables.
+							</div>
+						</div>
+					</div>
+					<div class="accordion-item">
+						<h3 class="accordion-header" id="headingThree">
+							<button
+								class="accordion-button collapsed"
+								type="button"
+								data-bs-toggle="collapse"
+								data-bs-target="#collapseThree"
+								aria-expanded="false"
+								aria-controls="collapseThree">
+								¿Ofrecen membresías o paquetes?
+							</button>
+						</h3>
+						<div
+							id="collapseThree"
+							class="accordion-collapse collapse"
+							aria-labelledby="headingThree"
+							data-bs-parent="#faqAccordion">
+							<div class="accordion-body">
+								Sí, ofrecemos diferentes tipos de membresías con descuentos especiales y beneficios adicionales. Tenemos
+								paquetes para individuos, familias y equipos. Visita nuestra recepción para más información sobre los
+								planes disponibles y sus beneficios.
+							</div>
+						</div>
+					</div>
+					<div class="accordion-item">
+						<h3 class="accordion-header" id="headingFour">
+							<button
+								class="accordion-button collapsed"
+								type="button"
+								data-bs-toggle="collapse"
+								data-bs-target="#collapseFour"
+								aria-expanded="false"
+								aria-controls="collapseFour">
+								¿Puedo organizar un evento privado en sus instalaciones?
+							</button>
+						</h3>
+						<div
+							id="collapseFour"
+							class="accordion-collapse collapse"
+							aria-labelledby="headingFour"
+							data-bs-parent="#faqAccordion">
+							<div class="accordion-body">
+								¡Claro que sí! Nuestras instalaciones están disponibles para eventos privados como torneos corporativos,
+								fiestas de cumpleaños con temática deportiva y otros eventos especiales. Contamos con paquetes
+								personalizados que pueden incluir catering, fotografía y otros servicios. Contáctanos para más detalles.
+							</div>
+						</div>
+					</div>
+					<div class="accordion-item">
+						<h3 class="accordion-header" id="headingFive">
+							<button
+								class="accordion-button collapsed"
+								type="button"
+								data-bs-toggle="collapse"
+								data-bs-target="#collapseFive"
+								aria-expanded="false"
+								aria-controls="collapseFive">
+								¿Tienen estacionamiento disponible?
+							</button>
+						</h3>
+						<div
+							id="collapseFive"
+							class="accordion-collapse collapse"
+							aria-labelledby="headingFive"
+							data-bs-parent="#faqAccordion">
+							<div class="accordion-body">
+								Sí, contamos con amplio estacionamiento privado para nuestros clientes. El estacionamiento es gratuito
+								para quienes tienen reservaciones activas. Para visitantes sin reservación, aplica una tarifa de S/. 5
+								por hora con un máximo de S/. 30 por día.
+							</div>
+						</div>
+					</div>
+				</div>
+			</section>
+		</main>
+		<!-- Footer -->
+		<footer class="bg-dark text-white py-5">
+			<div class="container">
+				<div class="row">
+					<div class="col-md-4 mb-4">
+						<img src="img/Peloteros.png" alt="ATCSports" height="40" class="mb-3" />
+						<p>La plataforma líder para reservar canchas deportivas y organizar eventos deportivos en tu ciudad.</p>
+					</div>
+					<div class="col-md-2 mb-4">
+						<h5>Enlaces</h5>
+						<ul class="list-unstyled">
+							<li class="mb-2"><a href="index.html" class="text-white">Inicio</a></li>
+							<li class="mb-2"><a href="canchas.html" class="text-white">Canchas</a></li>
+							<li class="mb-2"><a href="eventos.html" class="text-white">Eventos</a></li>
+							<li class="mb-2"><a href="contacto.html" class="text-white">Contacto</a></li>
+						</ul>
+					</div>
+					<div class="col-md-3 mb-4">
+						<h5>Contacto</h5>
+						<ul class="list-unstyled">
+							<li class="mb-2"><i class="fas fa-map-marker-alt me-2"></i> Av. Principal 456</li>
+							<li class="mb-2"><i class="fas fa-phone me-2"></i> (123) 456-7890</li>
+							<li class="mb-2"><i class="fas fa-envelope me-2"></i> info@Peloteros.com</li>
+						</ul>
+					</div>
+					<div class="col-md-3 mb-4">
+						<h5>Newsletter</h5>
+						<p>Suscríbete para recibir promociones y novedades.</p>
+						<form>
+							<div class="input-group mb-3">
+								<input type="email" class="form-control" placeholder="Tu email" />
+								<button class="btn btn-primary" type="button">Enviar</button>
+							</div>
+						</form>
+					</div>
+				</div>
+				<hr class="my-4" />
+				<div class="row">
+					<div class="col-md-6">
+						<p class="mb-0">&copy; 2025 Peloteros. Todos los derechos reservados.</p>
+					</div>
+					<div class="col-md-6 text-md-end">
+						<a href="#" class="text-white me-3">Términos y condiciones</a>
+						<a href="#" class="text-white">Política de privacidad</a>
+					</div>
+				</div>
+			</div>
+		</footer>
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	</body>
+</html>

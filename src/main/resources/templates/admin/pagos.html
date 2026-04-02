@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html
+	xmlns:th="http://www.thymeleaf.org"
+	th:with="activeMenu='pagos'"
+	xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Gestión de Pagos - Panel de Administración</title>
+
+		<!-- Bootstrap CSS -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+		<!-- Bootstrap Icons -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
+		<style>
+			body {
+				background-color: #f8f9fa;
+			}
+			.sidebar {
+				background: linear-gradient(180deg, #343a40 0%, #212529 100%);
+				color: white;
+				height: 100vh;
+				position: fixed;
+			}
+			.card {
+				transition: transform 0.3s ease, box-shadow 0.3s ease;
+				border: none;
+				border-radius: 10px;
+				overflow: hidden;
+			}
+			.card:hover {
+				transform: translateY(-5px);
+				box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+			}
+			.card-title {
+				font-weight: 600;
+			}
+			.main-content {
+				margin-left: 280px;
+				padding: 20px;
+				width: calc(100% - 280px);
+				max-width: 100%;
+				box-sizing: border-box;
+			}
+			@media (max-width: 992px) {
+				.main-content {
+					margin-left: 0;
+					width: 100%;
+				}
+			}
+			.status-badge {
+				padding: 0.35em 0.65em;
+				border-radius: 50rem;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="d-flex">
+			<!-- Sidebar -->
+			<div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+			<!-- Main Content -->
+			<main class="main-content">
+				<div
+					class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+					<h1 class="h2"><i class="bi bi-cash-coin me-2"></i> Gestion de Pagos</h1>
+					<div class="btn-toolbar mb-2 mb-md-0">
+						<button
+							type="button"
+							class="btn btn-sm btn-primary"
+							data-bs-toggle="modal"
+							data-bs-target="#registrarPagoModal">
+							<i class="bi bi-plus-circle"></i> Registrar Pago
+						</button>
+					</div>
+				</div>
+
+				<!-- Mensajes de éxito/error -->
+				<div id="alertContainer">
+					<div th:if="${param.success != null}" class="alert alert-success alert-dismissible fade show" role="alert">
+						<i class="bi bi-check-circle me-2"></i>
+						<span th:text="${param.success}">Pago registrado exitosamente</span>
+						<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+					</div>
+				</div>
+
+				<!-- Filtros -->
+				<div class="card mb-4">
+					<div class="card-header">
+						<h5 class="mb-0"><i class="bi bi-funnel me-2"></i>Filtros de Búsqueda</h5>
+					</div>
+					<div class="card-body">
+						<form id="filtroPagosForm" th:action="@{/admin/pagos}" method="get" class="row g-3">
+							<div class="col-md-3">
+								<label for="fechaInicio" class="form-label">Fecha Inicio</label>
+								<input
+									type="date"
+									class="form-control"
+									id="fechaInicio"
+									name="fechaInicio"
+									th:value="${fechaInicio != null} ? ${#temporals.format(fechaInicio, 'yyyy-MM-dd')} : ''" />
+							</div>
+							<div class="col-md-3">
+								<label for="fechaFin" class="form-label">Fecha Fin</label>
+								<input
+									type="date"
+									class="form-control"
+									id="fechaFin"
+									name="fechaFin"
+									th:value="${fechaFin != null} ? ${#temporals.format(fechaFin, 'yyyy-MM-dd')} : ''" />
+							</div>
+							<div class="col-md-4">
+								<label for="usuarioId" class="form-label">Usuario</label>
+								<select id="usuarioId" name="usuarioId" class="form-select">
+									<option value="">Todos los usuarios</option>
+									<option
+										th:each="usuario : ${usuarios}"
+										th:value="${usuario.id}"
+										th:text="${usuario.nombre + ' (' + usuario.email + ')'}"
+										th:selected="${usuarioSeleccionado != null && usuarioSeleccionado.id == usuario.id}"></option>
+								</select>
+							</div>
+							<div class="col-12 text-end">
+								<a th:href="@{/admin/pagos}" class="btn btn-outline-secondary me-2">
+									<i class="bi bi-arrow-counterclockwise"></i> Restablecer
+								</a>
+								<button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Buscar</button>
+							</div>
+						</form>
+					</div>
+				</div>
+
+				<!-- Resumen de ingresos -->
+				<div class="row mb-4">
+					<div class="col-md-4">
+						<div class="card bg-light">
+							<div class="card-body py-2">
+								<div class="d-flex justify-content-between align-items-center">
+									<div>
+										<h6 class="text-muted mb-0">Total Ingresos</h6>
+										<h4
+											class="mb-0 fw-bold"
+											th:text="${'S/ ' + #numbers.formatDecimal(totalIngresos != null ? totalIngresos : 0, 1, 2)}">
+											S/ 0.00
+										</h4>
+									</div>
+									<div class="bg-primary bg-opacity-10 p-3 rounded">
+										<i class="bi bi-currency-dollar text-primary fs-4"></i>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<!-- Lista de Pagos -->
+				<div class="card">
+					<div class="card-body p-0">
+						<div class="table-responsive">
+							<table class="table table-hover mb-0 align-middle">
+								<thead class="table-light">
+									<tr>
+										<th>ID Pago</th>
+										<th>Reserva</th>
+										<th>Usuario</th>
+										<th>Monto</th>
+										<th>Fecha</th>
+										<th>Método</th>
+										<th>Estado</th>
+										<th class="text-end">Acciones</th>
+									</tr>
+								</thead>
+								<tbody>
+									<tr th:each="pago : ${pagos}" th:class="${pago.estado == 'PENDIENTE'} ? 'table-warning' : ''">
+										<td th:text="'#' + ${pago.id}">#PAY-001</td>
+										<td>
+											<a th:href="@{/admin/reservas/} + ${pago.reserva.id}" class="text-decoration-none">
+												<span th:text="'#' + ${pago.reserva.id}">#RES-456</span>
+											</a>
+										</td>
+										<td th:text="${pago.reserva.usuario.nombre + ' (' + pago.reserva.usuario.email + ')'}">Usuario</td>
+										<td th:text="${'S/ ' + #numbers.formatDecimal(pago.monto, 1, 2)}">S/ 0.00</td>
+										<td th:text="${#temporals.format(pago.fechaPago, 'dd/MM/yyyy HH:mm')}">Fecha</td>
+										<td>
+											<span th:if="${pago.metodoPago == 'EFECTIVO'}" class="badge bg-secondary">
+												<i class="bi bi-cash"></i> Efectivo
+											</span>
+											<span th:if="${pago.metodoPago == 'YAPE'}" class="badge bg-success">
+												<i class="bi bi-phone"></i> Yape
+											</span>
+										</td>
+										<td>
+											<span
+												th:class="${pago.estado == 'COMPLETADO'} ? 'badge bg-success' : 
+                                    ${pago.estado == 'PENDIENTE'} ? 'badge bg-warning text-dark' : 'badge bg-danger'">
+												<span th:text="${pago.estado}">Estado</span>
+											</span>
+										</td>
+										<td class="text-end">
+											<button
+												class="btn btn-sm btn-outline-primary me-1"
+												title="Ver detalles"
+												th:onclick="'verDetallePago(' + ${pago.id} + ')'">
+												<i class="bi bi-eye"></i>
+											</button>
+											<a
+												th:if="${pago.comprobanteUrl != null}"
+												th:href="@{/admin/pagos/} + ${pago.id} + '/comprobante'"
+												class="btn btn-sm btn-outline-secondary"
+												title="Ver comprobante"
+												target="_blank">
+												<i class="bi bi-receipt"></i>
+											</a>
+										</td>
+									</tr>
+									<tr th:if="${#lists.isEmpty(pagos)}">
+										<td colspan="8" class="text-center py-4">
+											<div class="text-muted">
+												<i class="bi bi-inbox" style="font-size: 2rem"></i>
+												<p class="mt-2 mb-0">No se encontraron pagos con los filtros seleccionados</p>
+											</div>
+										</td>
+									</tr>
+								</tbody>
+							</table>
+						</div>
+					</div>
+					<div class="card-footer bg-white">
+						<nav aria-label="Page navigation">
+							<ul class="pagination justify-content-end mb-0">
+								<li class="page-item disabled">
+									<a class="page-link" href="#" tabindex="-1" aria-disabled="true">Anterior</a>
+								</li>
+								<li class="page-item active"><a class="page-link" href="#">1</a></li>
+								<li class="page-item"><a class="page-link" href="#">2</a></li>
+								<li class="page-item"><a class="page-link" href="#">3</a></li>
+								<li class="page-item">
+									<a class="page-link" href="#">Siguiente</a>
+								</li>
+							</ul>
+						</nav>
+					</div>
+				</div>
+			</main>
+		</div>
+
+		<!-- Modal Registrar Pago -->
+		<div
+			class="modal fade"
+			id="registrarPagoModal"
+			tabindex="-1"
+			aria-labelledby="registrarPagoModalLabel"
+			aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title" id="registrarPagoModalLabel">Registrar Nuevo Pago</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<form id="registrarPagoForm" th:action="@{/admin/pagos/registrar}" method="post">
+						<div class="modal-body">
+							<div class="mb-3">
+								<label for="reservaId" class="form-label">Reserva <span class="text-danger">*</span></label>
+								<select class="form-select" id="reservaId" name="reservaId" required>
+									<option value="" selected disabled>Seleccione una reserva</option>
+									<option
+										th:each="reserva : ${reservasPendientes}"
+										th:value="${reserva.id}"
+										th:text="'#' + ${reserva.id} + ' - ' + ${reserva.usuario.nombre} + ' ' + ${reserva.usuario.apellido} + ' - ' + ${#temporals.format(reserva.fechaHora, 'dd/MM/yyyy HH:mm')}"></option>
+								</select>
+							</div>
+							<div class="mb-3">
+								<label for="monto" class="form-label">Monto (S/) <span class="text-danger">*</span></label>
+								<input type="number" step="0.01" min="0" class="form-control" id="monto" name="monto" required />
+							</div>
+							<div class="mb-3">
+								<label for="metodoPago" class="form-label">Método de Pago <span class="text-danger">*</span></label>
+								<select class="form-select" id="metodoPago" name="metodoPago" required>
+									<option value="" selected disabled>Seleccione un método</option>
+									<option value="EFECTIVO">Efectivo</option>
+									<option value="YAPE">Yape</option>
+								</select>
+							</div>
+						</div>
+						<div class="modal-footer">
+							<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+							<button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i> Guardar Pago</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+
+		<!-- Modal Detalle Pago -->
+		<div class="modal fade" id="detallePagoModal" tabindex="-1" aria-hidden="true">
+			<div class="modal-dialog">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h5 class="modal-title">Detalles del Pago</h5>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body" id="detallePagoContent">
+						<!-- Contenido dinámico -->
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Bootstrap Bundle with Popper -->
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+		<script th:inline="javascript">
+			// Función para formatear moneda
+			function formatCurrency(amount) {
+				return new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(amount);
+			}
+
+			// Función para formatear fecha
+			function formatDate(dateString) {
+				const options = {
+					year: "numeric",
+					month: "2-digit",
+					day: "2-digit",
+					hour: "2-digit",
+					minute: "2-digit",
+				};
+				return new Date(dateString).toLocaleString("es-PE", options);
+			}
+
+			// Función para ver detalles del pago
+			function verDetallePago(pagoId) {
+				// Aquí podrías hacer una llamada AJAX para obtener los detalles del pago
+				// Por ahora mostramos un mensaje de ejemplo
+				const content =
+					'\
+        <div class="row">\
+          <div class="col-md-6 mb-2">\
+            <p class="mb-1"><strong>ID Pago:</strong></p>\
+            <p>#' +
+					pagoId +
+					'</p>\
+          </div>\
+          <div class="col-md-6 mb-2">\
+            <p class="mb-1"><strong>Fecha:</strong></p>\
+            <p>' +
+					new Date().toLocaleString("es-PE") +
+					'</p>\
+          </div>\
+          <div class="col-md-6 mb-2">\
+            <p class="mb-1"><strong>Monto:</strong></p>\
+            <p>S/ 150.00</p>\
+          </div>\
+          <div class="col-md-6 mb-2">\
+            <p class="mb-1"><strong>Estado:</strong></p>\
+            <p><span class="badge bg-success">COMPLETADO</span></p>\
+          </div>\
+          <div class="col-12">\
+            <p class="mb-1"><strong>Método de Pago:</strong></p>\
+            <p><span class="badge bg-secondary"><i class="bi bi-cash"></i> EFECTIVO</span></p>\
+          </div>\
+        </div>\
+      ';
+
+				document.getElementById("detallePagoContent").innerHTML = content;
+				const modal = new bootstrap.Modal(document.getElementById("detallePagoModal"));
+				modal.show();
+			}
+
+			// Función para registrar en consola las reservas disponibles
+			function logReservasDisponibles() {
+				const reservas = document.querySelectorAll("#reservaId option");
+				console.log("=== RESERVAS DISPONIBLES ===");
+				console.log("Total de reservas:", reservas.length - 1); // Restamos 1 por el option vacío
+
+				reservas.forEach((reserva, index) => {
+					if (reserva.value) {
+						// Saltar el primer option vacío
+						console.group(`Reserva #${index}`);
+						console.log("ID:", reserva.value);
+						console.log("Texto:", reserva.textContent.trim());
+						console.log("Seleccionada:", reserva.selected);
+						console.groupEnd();
+					}
+				});
+			}
+
+			document.addEventListener("DOMContentLoaded", function () {
+				// Registrar las reservas disponibles al cargar la página
+				logReservasDisponibles();
+
+				// Cargar monto automáticamente al seleccionar reserva
+				var reservaSelect = document.getElementById("reservaId");
+				if (reservaSelect) {
+					reservaSelect.addEventListener("change", function () {
+						var reservaId = this.value;
+						console.log("Reserva seleccionada - ID:", reservaId);
+						console.log("Reserva seleccionada - Texto:", this.options[this.selectedIndex].text);
+
+						if (reservaId) {
+							// Aquí podrías hacer una llamada AJAX para obtener el monto de la reserva
+							// Por ahora lo dejamos vacío para que el usuario ingrese el monto manualmente
+							console.log("Buscando detalles de la reserva ID:", reservaId);
+						}
+					});
+				}
+
+				// Inicializar tooltips
+				var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+				tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+					new bootstrap.Tooltip(tooltipTriggerEl);
+				});
+
+				// Establecer fechas por defecto si no están definidas
+				var fechaFin = document.getElementById("fechaFin");
+				var fechaInicio = document.getElementById("fechaInicio");
+
+				if (fechaFin && !fechaFin.value) {
+					var today = new Date().toISOString().split("T")[0];
+					fechaFin.value = today;
+					console.log("Fecha fin establecida por defecto:", today);
+				}
+
+				if (fechaInicio && !fechaInicio.value) {
+					var thirtyDaysAgo = new Date();
+					thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+					var thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split("T")[0];
+					fechaInicio.value = thirtyDaysAgoStr;
+					console.log("Fecha inicio establecida por defecto:", thirtyDaysAgoStr);
+				}
+
+				// Agregar evento al formulario de búsqueda
+				const filtroForm = document.getElementById("filtroPagosForm");
+				if (filtroForm) {
+					filtroForm.addEventListener("submit", function (e) {
+						console.log("=== ENVIANDO FORMULARIO DE BÚSQUEDA ===");
+						console.log("Fecha inicio:", fechaInicio?.value);
+						console.log("Fecha fin:", fechaFin?.value);
+						console.log("Usuario ID:", document.getElementById("usuarioId")?.value);
+						console.log("======================================");
+					});
+				}
+			});
+		</script>
+	</body>
+</html>

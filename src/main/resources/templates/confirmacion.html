@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirmación de Reserva - Peloteros</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --primary-green: #2e7d32;
+            --secondary-green: #81c784;
+            --light-green: #f1f8e9;
+            --orange: #fb8c00;
+            --light-gray: #f5f5f5;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f9f9f9;
+        }
+        
+        .header {
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 15px 0;
+            margin-bottom: 30px;
+        }
+        
+        .confirmation-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .confirmation-card {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+        
+        .confirmation-header {
+            background-color: var(--primary-green);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .confirmation-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+        
+        .confirmation-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .confirmation-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .confirmation-body {
+            padding: 30px;
+        }
+        
+        .detail-row {
+            display: flex;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .detail-label {
+            flex: 0 0 200px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .detail-value {
+            flex: 1;
+            color: #333;
+        }
+        
+        .qr-code {
+            width: 150px;
+            height: 150px;
+            background-color: #f5f5f5;
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px dashed #ccc;
+            border-radius: 5px;
+        }
+        
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn-print {
+            background-color: white;
+            color: var(--primary-green);
+            border: 1px solid var(--primary-green);
+        }
+        
+        .btn-print:hover {
+            background-color: var(--light-green);
+        }
+        
+        .btn-back {
+            background-color: var(--orange);
+            border: none;
+        }
+        
+        .btn-back:hover {
+            background-color: #e65100;
+        }
+        
+        .whatsapp-btn {
+            background-color: #25D366;
+            color: white;
+            border: none;
+        }
+        
+        .whatsapp-btn:hover {
+            background-color: #128C7E;
+            color: white;
+        }
+        
+        .info-card {
+            background-color: var(--light-green);
+            border-left: 4px solid var(--primary-green);
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 30px;
+        }
+        
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            body {
+                background-color: white;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .confirmation-card {
+                box-shadow: none;
+                border: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Encabezado -->
+    <div class="header no-print">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="logo-container">
+                    <img th:src="@{/img/logo.png}" alt="Peloteros" class="logo" height="40">
+                    <span class="ms-2 fw-bold">Peloteros</span>
+                </div>
+                <div class="d-flex align-items-center">
+                    <span class="me-3 fw-bold" th:text="'Hola, ' + ${reserva.usuario.nombre}"></span>
+                    <a th:href="@{/reserva/misreservas}" class="btn btn-outline-success me-2">
+                        <i class="fas fa-calendar-alt me-1"></i> Mis Reservas
+                    </a>
+                    <a th:href="@{/}" class="btn btn-outline-secondary">
+                        <i class="fas fa-home me-1"></i> Inicio
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="container mb-5">
+        <div class="confirmation-container">
+            <div class="confirmation-card">
+                <div class="confirmation-header">
+                    <div class="confirmation-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h1 class="confirmation-title">¡Reserva Confirmada!</h1>
+                    <p class="confirmation-subtitle">Tu reserva ha sido registrada exitosamente</p>
+                </div>
+                
+                <div class="confirmation-body">
+                    <div class="detail-row">
+                        <div class="detail-label">Número de Reserva:</div>
+                        <div class="detail-value" th:text="${reserva.id}">12345</div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label">Cancha:</div>
+                        <div class="detail-value" th:text="${reserva.cancha.nombre} + ' - ' + ${reserva.cancha.tipo}">Cancha #1 - Fútbol 7</div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label">Fecha:</div>
+                        <div class="detail-value" th:text="${#temporals.format(reserva.fechaHoraInicio, 'EEEE, d MMMM yyyy')}">Sábado, 15 Junio 2023</div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label">Horario:</div>
+                        <div class="detail-value" th:text="${#temporals.format(reserva.fechaHoraInicio, 'HH:mm')} + ' - ' + ${#temporals.format(reserva.fechaHoraFin, 'HH:mm')}">12:00 - 14:00</div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label">Duración:</div>
+                        <div class="detail-value" th:text="${T(java.time.Duration).between(reserva.fechaHoraInicio, reserva.fechaHoraFin).toHours()} + ' horas'">2 horas</div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label">Precio Total:</div>
+                        <div class="detail-value" th:text="'S/ ' + ${#numbers.formatDecimal(reserva.precioTotal, 1, 2)}">S/ 180.00</div>
+                    </div>
+                    
+                    <div class="detail-row" th:if="${reserva.comentarios}">
+                        <div class="detail-label">Comentarios:</div>
+                        <div class="detail-value" th:text="${reserva.comentarios}">Necesitamos balones adicionales</div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label">Estado:</div>
+                        <div class="detail-value">
+                            <span class="badge bg-success" th:text="${reserva.estado}">CONFIRMADA</span>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <div class="qr-code">
+                            <i class="fas fa-qrcode" style="font-size: 3rem; color: #ccc;"></i>
+                        </div>
+                        <p class="text-muted">Presenta este código QR al llegar al complejo</p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h5 class="fw-bold mb-3"><i class="fas fa-info-circle me-2"></i>Información Importante</h5>
+                        <ul class="mb-0">
+                            <li>Llega 15 minutos antes de tu horario reservado</li>
+                            <li>Presenta tu código QR o número de reserva al ingresar</li>
+                            <li>Cancelaciones con menos de 24 horas de anticipación no son reembolsables</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="actions no-print">
+                        <button onclick="window.print()" class="btn btn-print">
+                            <i class="fas fa-print me-2"></i>Imprimir
+                        </button>
+                        <a th:href="@{'https://wa.me/51987654321?text=Hola,%20tengo%20una%20reserva%20con%20ID%20' + ${reserva.id}}" 
+                           class="btn whatsapp-btn">
+                            <i class="fab fa-whatsapp me-2"></i>Compartir por WhatsApp
+                        </a>
+                        <a th:href="@{/reservar}" class="btn btn-back text-white">
+                            <i class="fas fa-calendar-plus me-2"></i>Nueva Reserva
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="confirmation-card no-print">
+                <div class="confirmation-header" style="background-color: #f8f9fa; color: #333;">
+                    <h2 class="confirmation-title" style="font-size: 1.5rem;">¿Cómo llegar?</h2>
+                </div>
+                <div class="confirmation-body">
+                    <div id="map" style="height: 300px; background-color: #eee; border-radius: 5px; margin-bottom: 20px;">
+                        <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background-color:#e9ecef;">
+                            <div style="text-align:center;">
+                                <i class="fas fa-map-marked-alt" style="font-size:2rem;color:var(--primary-green);"></i>
+                                <p class="mt-2">Ubicación del complejo deportivo</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="fw-bold"><i class="fas fa-location-dot text-danger me-2"></i>Dirección</h5>
+                            <p>Av. Deportiva 123, Surco, Lima</p>
+                            
+                            <h5 class="fw-bold mt-4"><i class="fas fa-clock text-primary me-2"></i>Horario de atención</h5>
+                            <p>Lunes a Domingo: 8:00 am - 10:00 pm</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="fw-bold"><i class="fas fa-phone text-success me-2"></i>Contacto</h5>
+                            <p>(01) 234-5678</p>
+                            <p>reservas@peloteros.com</p>
+                            
+                            <h5 class="fw-bold mt-4"><i class="fas fa-car text-warning me-2"></i>Estacionamiento</h5>
+                            <p>Disponible para clientes (sin costo adicional)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Aquí podrías generar un QR code real con librerías como QRCode.js
+            // Ejemplo: new QRCode(document.getElementById("qr-code"), "https://peloteros.com/reserva/12345");
+            
+            // Simulación de mapa (en una implementación real usarías Google Maps API)
+            const mapEl = document.getElementById('map');
+            
+            // Botón de WhatsApp con mensaje personalizado
+            const whatsappBtn = document.querySelector('.whatsapp-btn');
+            const reservaId = document.querySelector('.detail-value').textContent;
+            const whatsappMsg = `Hola, tengo una reserva en Peloteros con ID ${reservaId}. ¿Podrían confirmarme?`;
+            whatsappBtn.href = `https://wa.me/51916389488?text=${encodeURIComponent(whatsappMsg)}`;
+        });
+    </script>
+</body>
+</html>
+
